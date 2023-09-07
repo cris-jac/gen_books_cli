@@ -1,0 +1,90 @@
+import React, { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+
+function Books() {
+  const serverUrl = import.meta.env.VITE_SERVER_URL;
+  const baseUrl = `${serverUrl}/api/books`;
+
+  const [data, setData] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [selectedCategory, setSelectedCategory] = useState("");
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        // Added for categories -> After this, go to the server!
+        let url = baseUrl;
+        if(selectedCategory){
+            url += `?category=${selectedCategory}`
+        }
+
+        // Basic
+        const response = await fetch(url);
+        if (!response.ok) {
+          throw new Error("Failed to fetch data");
+        }
+        const jsonData = await response.json();
+        setData(jsonData);
+        setIsLoading(false);
+      } catch (error) {
+        console.log(error);
+        setError("Error fetching data. Please try again later.");
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [selectedCategory]);
+
+  return (
+    <div>
+      <h1>Books</h1>
+      <p>
+        This is where we use NodeJs, Express & MongoDB to grab some data. The
+        data below is pulled from a MongoDB database.
+      </p>
+
+        <Link to={"/createbook"}>+ Add New Book</Link>
+
+      <h2>Fetch example</h2>
+      {/* <pre>{JSON.stringify(data, null, 2)}</pre> */}
+
+
+        <div className="filters">
+            <label>Categories</label>
+            <select onChange={(e)=>setSelectedCategory(e.target.value)}>
+                <option value="">All</option>
+                <option value="short-story">Short-story</option>
+                <option value="fiction">Fiction</option>
+                <option value="novella">Novella</option>
+                <option value="existentialism">Existentialism</option>
+                <option value="poem">Poem</option>
+            </select>
+        </div>
+
+
+      {isLoading ? (
+        <p>Loading...</p>
+      ) : error ? (
+        <p>{error}</p>
+      ) : (
+        <ul className="books">
+          {data.map((item) => (
+            <li key={item._id}>
+              <Link to={`/books/${item.slug}`}>
+                <img
+                  src={`${serverUrl}/uploads/${item.thumbnail}`}
+                  alt={item.title}
+                />
+                <h3>{item.title}</h3>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+export default Books;
